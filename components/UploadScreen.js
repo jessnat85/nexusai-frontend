@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Modal, Pressable, TouchableOpacity, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, TouchableOpacity, Text, View, Image } from 'react-native';
 
 export default function NexusAI() {
   const [image, setImage] = useState(null);
@@ -47,10 +47,18 @@ export default function NexusAI() {
   };
 
   return (
-    <>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <TouchableOpacity style={styles.uploadButton} onPress={() => setModalVisible(true)}>
         <Text style={styles.uploadButtonText}>Upload or Take Photo</Text>
       </TouchableOpacity>
+
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={{ width: 300, height: 300, marginTop: 20, borderRadius: 10 }}
+          resizeMode="contain"
+        />
+      )}
 
       <Modal
         animationType="slide"
@@ -72,7 +80,7 @@ export default function NexusAI() {
           </View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 }
 
