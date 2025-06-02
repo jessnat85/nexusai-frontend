@@ -22,7 +22,8 @@
     "react-native-vector-icons": "*",
     "@react-native-picker/picker": "2.11.0",
     "@react-navigation/bottom-tabs": "*",
-    "react-native-safe-area-context": "5.4.0"
+    "react-native-safe-area-context": "5.4.0",
+    "expo-camera": "~16.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

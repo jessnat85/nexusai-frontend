@@ -17,8 +17,16 @@ export default function App() {
   const [clarifyResponse, setClarifyResponse] = useState({});
   const [clarifyLoading, setClarifyLoading] = useState({});
   // State for predefined question dropdowns
-  const [selectedQuestion, setSelectedQuestion] = useState('');
+  const [selectedPredefined, setSelectedPredefined] = useState('');
   const [selectedResultQuestions, setSelectedResultQuestions] = useState({});
+  // Predefined follow-up questions for Picker dropdowns
+  const predefinedQuestions = [
+    "Why is this trade valid?",
+    "What is the confidence based on?",
+    "Can I use this setup for scalping?",
+    "What does the price structure tell us?",
+    "Which indicator confirmed the trade?"
+  ];
   // Ask AI follow-up for a specific trade result
   const askAIClarify = async (question, res, index) => {
     if (!question || question.trim().length === 0) return;
@@ -458,19 +466,19 @@ export default function App() {
                 </TouchableOpacity>
               </View>
               {/* Predefined question dropdown */}
-              <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 10, marginTop: 8 }}>
+              <View style={styles.dropdownWrapper}>
                 <Picker
-                  selectedValue={selectedQuestion}
+                  selectedValue={selectedPredefined}
                   onValueChange={(itemValue) => {
-                    setSelectedQuestion(itemValue);
+                    setSelectedPredefined(itemValue);
                     if (itemValue) setClarifyQuestion(prev => ({ ...prev, [-1]: itemValue }));
                   }}
+                  style={styles.predefinedDropdown}
                 >
-                  <Picker.Item label="Select a question..." value="" />
-                  <Picker.Item label="What strategy is used?" value="What strategy is used?" />
-                  <Picker.Item label="What is the reasoning behind this trade?" value="What is the reasoning behind this trade?" />
-                  <Picker.Item label="Is there a risk of reversal?" value="Is there a risk of reversal?" />
-                  <Picker.Item label="What confirmation should I wait for?" value="What confirmation should I wait for?" />
+                  <Picker.Item label="Select a predefined question..." value="" />
+                  {predefinedQuestions.map((q, index) => (
+                    <Picker.Item key={index} label={q} value={q} />
+                  ))}
                 </Picker>
               </View>
               {clarifyLoading[-1] && (
@@ -511,21 +519,44 @@ export default function App() {
         <View style={styles.result}>
           {/* Nexus Confluence Trade badge removed from here */}
           {analysis.results.map((res, index) => (
-            <View key={index} style={styles.strategyBlock}>
+            <View key={index} style={styles.strategyBox}>
               <View style={styles.strategyTitleRow}>
                 <Feather name="activity" size={16} color={isDark ? '#fff' : '#000'} style={{ marginRight: 4 }} />
                 <Text style={styles.strategyTitle}>{res.strategy}</Text>
               </View>
-              <Text><Text style={styles.label}>Signal:</Text> <Text style={{ color: res.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{res.signal}</Text></Text>
-              <Text><Text style={styles.label}>Bias:</Text> {res.bias}</Text>
-              <Text><Text style={styles.label}>Trade Type:</Text> {res.tradeType}</Text>
-              <Text><Text style={styles.label}>Pattern:</Text> {res.pattern}</Text>
               <Text>
-                <Text style={styles.label}>Entry:</Text> {res.entry} | <Text style={styles.label}>SL:</Text> {res.stopLoss} | <Text style={styles.label}>TP1:</Text> {res.takeProfit}
-                {res.takeProfit2 && (<Text> | <Text style={styles.label}>TP2:</Text> {res.takeProfit2}</Text>)}
+                <Text style={styles.label}>Signal:</Text> <Text style={{ color: res.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{res.signal}</Text>
               </Text>
-              <Text><Text style={styles.label}>RR:</Text> {formatRR(res.entry, res.stopLoss, res.takeProfit)}</Text>
-              <Text><Text style={styles.label}>Size:</Text> {res.recommendedSize}</Text>
+              <Text>
+                <Text style={styles.label}>Bias:</Text> {res.bias}
+              </Text>
+              <Text>
+                <Text style={styles.label}>Trade Type:</Text> {res.tradeType}
+              </Text>
+              <Text>
+                <Text style={styles.label}>Pattern:</Text> {res.pattern}
+              </Text>
+              {/* Strategy value fields with label/value style */}
+              <Text style={styles.label}>
+                Entry: <Text style={styles.value}>{res.entry}</Text>
+              </Text>
+              <Text style={styles.label}>
+                Stop Loss: <Text style={styles.value}>{res.stopLoss}</Text>
+              </Text>
+              <Text style={styles.label}>
+                Take Profit: <Text style={styles.value}>{res.takeProfit}</Text>
+              </Text>
+              {res.takeProfit2 && (
+                <Text style={styles.label}>
+                  Take Profit 2: <Text style={styles.value}>{res.takeProfit2}</Text>
+                </Text>
+              )}
+              <Text style={styles.label}>
+                RR: <Text style={styles.value}>{formatRR(res.entry, res.stopLoss, res.takeProfit)}</Text>
+              </Text>
+              <Text style={styles.label}>
+                Size: <Text style={styles.value}>{res.recommendedSize}</Text>
+              </Text>
               {res.confidence >= 75 ? (
                 <View style={styles.highConfidenceTag}>
                   <Text style={styles.highConfidenceText}>{res.confidence}% High Confidence</Text>
@@ -616,20 +647,20 @@ export default function App() {
                     <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>Ask AI</Text>
                   </TouchableOpacity>
                 </View>
-                {/* Predefined question dropdown */}
-                <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 10, marginTop: 8 }}>
+                {/* Predefined question dropdown as a dropdown */}
+                <View style={styles.dropdownWrapper}>
                   <Picker
                     selectedValue={selectedResultQuestions[index] || ''}
                     onValueChange={(itemValue) => {
                       setSelectedResultQuestions(prev => ({ ...prev, [index]: itemValue }));
                       if (itemValue) setClarifyQuestion(prev => ({ ...prev, [index]: itemValue }));
                     }}
+                    style={styles.predefinedDropdown}
                   >
-                    <Picker.Item label="Select a question..." value="" />
-                    <Picker.Item label="What strategy is used?" value="What strategy is used?" />
-                    <Picker.Item label="What is the reasoning behind this trade?" value="What is the reasoning behind this trade?" />
-                    <Picker.Item label="Is there a risk of reversal?" value="Is there a risk of reversal?" />
-                    <Picker.Item label="What confirmation should I wait for?" value="What confirmation should I wait for?" />
+                    <Picker.Item label="Select a predefined question..." value="" />
+                    {predefinedQuestions.map((q, idx) => (
+                      <Picker.Item key={idx} label={q} value={q} />
+                    ))}
                   </Picker>
                 </View>
                 {clarifyLoading[index] && (
@@ -807,6 +838,13 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
   },
+  strategyBox: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    padding: 12,
+    marginVertical: 8,
+    overflow: 'hidden',
+  },
   strategyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -820,6 +858,10 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: 'bold',
     marginBottom: 4,
+  },
+  value: {
+    fontWeight: 'normal',
+    color: '#333',
   },
   confidenceTag: {
     backgroundColor: '#D4AF37',
@@ -925,5 +967,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  dropdownWrapper: {
+    marginVertical: 10,
+    paddingHorizontal: 16,
+  },
+  predefinedDropdown: {
+    backgroundColor: '#ffffff',
+    borderColor: '#D4AF37',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    width: '85%',
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
 });
-
