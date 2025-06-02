@@ -21,7 +21,6 @@ export default function App() {
           headerShown: false,
           tabBarIcon: ({ color, size }) => {
             if (route.name === 'Upload') return <AntDesign name="upload" size={size} color={color} />;
-            if (route.name === 'Camera') return <Feather name="camera" size={size} color={color} />;
             if (route.name === 'Results') return <Feather name="bar-chart-2" size={size} color={color} />;
             if (route.name === 'Settings') return <Feather name="settings" size={size} color={color} />;
             if (route.name === 'About') return <AntDesign name="infocirlceo" size={size} color={color} />;
