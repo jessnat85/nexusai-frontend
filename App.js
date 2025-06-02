@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useColorScheme } from 'react-native';
 import { AntDesign, Feather } from '@expo/vector-icons';
 
-import UploadScreen from './components/UploadScreen';
+import NexusAI from './NexusAI';
 import ResultsScreen from './components/ResultsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import AboutScreen from './components/AboutScreen';
@@ -29,7 +29,7 @@ export default function App() {
           tabBarInactiveTintColor: 'gray',
         })}
       >
-        <Tab.Screen name="Upload" component={UploadScreen} />
+        <Tab.Screen name="Upload" component={NexusAI} />
         <Tab.Screen name="Results" component={ResultsScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
         <Tab.Screen name="About" component={AboutScreen} />
