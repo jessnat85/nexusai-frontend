@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Picker } from '@react-native-picker/picker';
 import { Modal, FlatList } from 'react-native';
 import {
   View, Text, Image, StyleSheet, ScrollView,
@@ -81,6 +82,7 @@ export default function App() {
   const [language, setLanguage] = useState('English');
   const [tradeStyle, setTradeStyle] = useState('Intraday');
   const [savedIds, setSavedIds] = useState([]);
+  const [timeframe, setTimeframe] = useState("5m");
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
   const themeStyles = isDark ? styles.dark : styles.light;
@@ -175,6 +177,7 @@ export default function App() {
     formData.append('language', language || 'English');
     formData.append('userId', 'jessnat');
     formData.append('tradeStyle', tradeStyle);
+    formData.append('timeframe', timeframe);
 
     try {
       const response = await fetch("https://nexus-ai-backend-1.onrender.com/analyze", {
@@ -267,6 +270,33 @@ export default function App() {
                 <Text style={styles.assetTypeBtnText}>{type}</Text>
               </TouchableOpacity>
             ))}
+          </View>
+        </View>
+        {/* Chart Timeframe Picker */}
+        <View style={styles.assetTypeBox}>
+          <Text style={styles.label}>Chart Timeframe</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={timeframe}
+              onValueChange={(itemValue) => setTimeframe(itemValue)}
+              style={styles.picker}
+              dropdownIconColor="#000"
+            >
+              {(
+                [
+                  { label: '1m', value: '1m' },
+                  { label: '3m', value: '3m' },
+                  { label: '5m', value: '5m' },
+                  { label: '15m', value: '15m' },
+                  { label: '30m', value: '30m' },
+                  { label: '1h', value: '1h' },
+                  { label: '4h', value: '4h' },
+                  { label: '1d', value: '1d' },
+                ]
+              ).map((option) => (
+                <Picker.Item label={option.label} value={option.value} key={option.value} />
+              ))}
+            </Picker>
           </View>
         </View>
 
@@ -797,6 +827,23 @@ export default function App() {
   );
 }
 const styles = StyleSheet.create({
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginVertical: 10,
+    width: '90%',
+    alignSelf: 'center',
+    height: 44,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  picker: {
+    height: 44,
+    width: '100%',
+  },
   container: {
     flex: 1,
     paddingTop: 80,
@@ -1077,5 +1124,38 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     width: '100%',
+  },
+  dropdown: {
+    backgroundColor: '#fff',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: '90%',
+    alignSelf: 'center',
+    marginVertical: 10,
+  },
+  timeframePickerContainer: {
+    width: '90%',
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginVertical: 10,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  timeframePicker: {
+    width: '100%',
+    height: 44,
+    color: '#333',
+  },
+  label: {
+    marginTop: 10,
+    marginLeft: 20,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
 });
