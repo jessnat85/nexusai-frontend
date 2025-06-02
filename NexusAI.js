@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import {
   View, Text, Image, StyleSheet, ScrollView,
-  useColorScheme, TouchableOpacity, TextInput, ActivityIndicator
+  useColorScheme, TouchableOpacity, TextInput, ActivityIndicator,
+  Platform, ActionSheetIOS, Alert
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
@@ -110,31 +111,33 @@ export default function App() {
 
   // Show image selection options
   const handleImageSelection = async () => {
-    // Show action sheet with options: "Take Photo", "Choose from Gallery", "Cancel"
-    // For simplicity, use prompt if ActionSheet is not available (expo does not provide native ActionSheet by default)
-    // You can replace this with a better UI (e.g. react-native-action-sheet) if desired
-    const options = ['Take Photo', 'Choose from Gallery', 'Cancel'];
-    // Use window.prompt as a quick workaround for demo, can be replaced with a modal
-    // 0: Take Photo, 1: Choose from Gallery
-    // On native, consider using a library for action sheets
-    let choice = null;
-    if (typeof window !== 'undefined' && window.prompt) {
-      const input = window.prompt('Select option:\n1. Take Photo\n2. Choose from Gallery\n(Cancel to abort)');
-      if (input === '1') choice = 0;
-      else if (input === '2') choice = 1;
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Take Photo', 'Choose from Gallery'],
+          cancelButtonIndex: 0,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1) {
+            await takePhoto();
+          } else if (buttonIndex === 2) {
+            await pickImage();
+          }
+        }
+      );
     } else {
-      // Fallback: just pick from gallery (for native, replace with ActionSheet)
-      choice = await new Promise(resolve => {
-        // Use setTimeout to avoid blocking
-        setTimeout(() => resolve(1), 0);
-      });
+      // Simple fallback for Android or other platforms
+      Alert.alert(
+        'Select Option',
+        'Choose image source',
+        [
+          { text: 'Take Photo', onPress: () => takePhoto() },
+          { text: 'Choose from Gallery', onPress: () => pickImage() },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+        { cancelable: true }
+      );
     }
-    if (choice === 0) {
-      await takePhoto();
-    } else if (choice === 1) {
-      await pickImage();
-    }
-    // else: cancel/do nothing
   };
 
   const analyzeChart = async (uri) => {
@@ -395,7 +398,7 @@ export default function App() {
             {/* --- Commentary Section --- */}
             <View style={styles.commentaryBox}>
               <MaterialCommunityIcons name="lightbulb-outline" size={16} color={isDark ? '#fff' : '#333'} />
-              <Text style={styles.commentary}>{highlightTimeframes(analysis.topPick.commentary)}</Text>
+              <Text style={[styles.commentary, { flexWrap: 'wrap', flex: 1 }]}>{highlightTimeframes(analysis.topPick.commentary)}</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginTop: 8 }}>
               {savedIds.includes(analysis.topPick.entry) ? (
@@ -575,7 +578,7 @@ export default function App() {
                 <>
                   <View style={styles.commentaryBox}>
                     <MaterialCommunityIcons name="lightbulb-outline" size={16} color={isDark ? '#fff' : '#333'} />
-                    <Text style={styles.commentary}>{highlightTimeframes(res.commentary)}</Text>
+                    <Text style={[styles.commentary, { flexWrap: 'wrap', flex: 1 }]}>{highlightTimeframes(res.commentary)}</Text>
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginTop: 8 }}>
                     {savedIds.includes(res.entry) ? (
@@ -972,20 +975,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   predefinedDropdown: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderColor: '#D4AF37',
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    width: '85%',
-    alignSelf: 'center',
     marginTop: 8,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingHorizontal: 12,
+    height: 44,
+    justifyContent: 'center',
+    width: '100%',
   },
 });
