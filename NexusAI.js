@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Picker } from '@react-native-picker/picker';
 import {
   View, Text, Image, StyleSheet, ScrollView,
   useColorScheme, TouchableOpacity, TextInput, ActivityIndicator
@@ -15,6 +16,9 @@ export default function App() {
   const [clarifyQuestion, setClarifyQuestion] = useState({});
   const [clarifyResponse, setClarifyResponse] = useState({});
   const [clarifyLoading, setClarifyLoading] = useState({});
+  // State for predefined question dropdowns
+  const [selectedQuestion, setSelectedQuestion] = useState('');
+  const [selectedResultQuestions, setSelectedResultQuestions] = useState({});
   // Ask AI follow-up for a specific trade result
   const askAIClarify = async (question, res, index) => {
     if (!question || question.trim().length === 0) return;
@@ -302,14 +306,16 @@ export default function App() {
               <View style={{ backgroundColor: '#232323', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
                 <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{analysis.topPick.strategy}</Text>
               </View>
-              {analysis.topPick.isNexusConfluence && (
-                <View style={{ backgroundColor: '#000', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 8 }}>
-                  <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>NEXUS CONFLUENCE</Text>
-                </View>
-              )}
+              {/* Remove old Nexus Confluence badge here if any */}
             </View>
             <Text style={styles.topPickLabel}>Top Pick</Text>
             <Text style={styles.strategyTitle}>{analysis.topPick.strategy}</Text>
+            {/* --- NEXUS CONFLUENCE TRADE badge inside Top Pick card if superTrade --- */}
+            {analysis.superTrade && (
+              <View style={styles.confluenceBadge}>
+                <Text style={styles.confluenceText}>NEXUS CONFLUENCE TRADE</Text>
+              </View>
+            )}
             {/* --- Confidence Bar --- */}
             <View style={{ marginTop: 8, marginBottom: 10 }}>
               <View style={{
@@ -451,32 +457,21 @@ export default function App() {
                   <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>Ask AI</Text>
                 </TouchableOpacity>
               </View>
-              {/* Predefined question buttons */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 8 }}>
-                {[
-                  "Why is this a top pick?",
-                  "What are the risks?",
-                  "Explain the entry and stop loss.",
-                  "What indicators support this?",
-                  "How to manage this trade?",
-                ].map((q, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={{
-                      backgroundColor: '#D4AF37',
-                      borderRadius: 16,
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      marginRight: 6,
-                      marginBottom: 6,
-                    }}
-                    onPress={() =>
-                      setClarifyQuestion(prev => ({ ...prev, [-1]: q }))
-                    }
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>{q}</Text>
-                  </TouchableOpacity>
-                ))}
+              {/* Predefined question dropdown */}
+              <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 10, marginTop: 8 }}>
+                <Picker
+                  selectedValue={selectedQuestion}
+                  onValueChange={(itemValue) => {
+                    setSelectedQuestion(itemValue);
+                    if (itemValue) setClarifyQuestion(prev => ({ ...prev, [-1]: itemValue }));
+                  }}
+                >
+                  <Picker.Item label="Select a question..." value="" />
+                  <Picker.Item label="What strategy is used?" value="What strategy is used?" />
+                  <Picker.Item label="What is the reasoning behind this trade?" value="What is the reasoning behind this trade?" />
+                  <Picker.Item label="Is there a risk of reversal?" value="Is there a risk of reversal?" />
+                  <Picker.Item label="What confirmation should I wait for?" value="What confirmation should I wait for?" />
+                </Picker>
               </View>
               {clarifyLoading[-1] && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
@@ -514,12 +509,7 @@ export default function App() {
 
       {analysis?.results?.length > 0 && (
         <View style={styles.result}>
-          {analysis.superTrade && (
-            <View style={styles.superTradeBox}>
-              <Feather name="star" size={18} color="#D4AF37" />
-              <Text style={styles.superTradeText}> NEXUS CONFLUENCE TRADE</Text>
-            </View>
-          )}
+          {/* Nexus Confluence Trade badge removed from here */}
           {analysis.results.map((res, index) => (
             <View key={index} style={styles.strategyBlock}>
               <View style={styles.strategyTitleRow}>
@@ -538,7 +528,7 @@ export default function App() {
               <Text><Text style={styles.label}>Size:</Text> {res.recommendedSize}</Text>
               {res.confidence >= 75 ? (
                 <View style={styles.highConfidenceTag}>
-                  <Text style={styles.highConfidenceText}>🔥 {res.confidence}% High Confidence</Text>
+                  <Text style={styles.highConfidenceText}>{res.confidence}% High Confidence</Text>
                 </View>
               ) : (
                 <View style={styles.confidenceTag}>
@@ -626,32 +616,21 @@ export default function App() {
                     <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>Ask AI</Text>
                   </TouchableOpacity>
                 </View>
-                {/* Predefined question buttons */}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 8 }}>
-                  {[
-                    "Why this trade?",
-                    "What is the risk/reward?",
-                    "Explain the stop loss.",
-                    "What indicators are used?",
-                    "How to manage this trade?",
-                  ].map((q, i) => (
-                    <TouchableOpacity
-                      key={i}
-                      style={{
-                        backgroundColor: '#D4AF37',
-                        borderRadius: 16,
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        marginRight: 6,
-                        marginBottom: 6,
-                      }}
-                      onPress={() =>
-                        setClarifyQuestion(prev => ({ ...prev, [index]: q }))
-                      }
-                    >
-                      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>{q}</Text>
-                    </TouchableOpacity>
-                  ))}
+                {/* Predefined question dropdown */}
+                <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 10, marginTop: 8 }}>
+                  <Picker
+                    selectedValue={selectedResultQuestions[index] || ''}
+                    onValueChange={(itemValue) => {
+                      setSelectedResultQuestions(prev => ({ ...prev, [index]: itemValue }));
+                      if (itemValue) setClarifyQuestion(prev => ({ ...prev, [index]: itemValue }));
+                    }}
+                  >
+                    <Picker.Item label="Select a question..." value="" />
+                    <Picker.Item label="What strategy is used?" value="What strategy is used?" />
+                    <Picker.Item label="What is the reasoning behind this trade?" value="What is the reasoning behind this trade?" />
+                    <Picker.Item label="Is there a risk of reversal?" value="Is there a risk of reversal?" />
+                    <Picker.Item label="What confirmation should I wait for?" value="What confirmation should I wait for?" />
+                  </Picker>
                 </View>
                 {clarifyLoading[index] && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
@@ -891,6 +870,20 @@ const styles = StyleSheet.create({
     color: '#D4AF37',
     fontWeight: 'bold',
     marginLeft: 6,
+  },
+  confluenceBadge: {
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  confluenceText: {
+    fontWeight: 'bold',
+    color: '#000',
+    fontSize: 12,
   },
   light: {
     background: { backgroundColor: '#fff' },
