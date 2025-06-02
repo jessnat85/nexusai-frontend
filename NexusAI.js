@@ -294,24 +294,81 @@ export default function App() {
       {analysis?.topPick && (
         <>
           <View style={[styles.topPickBox, styles.strategyBlock]}>
+            {/* --- Trade Type and Strategy Badges --- */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <View style={{ backgroundColor: '#D4AF37', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginRight: 8 }}>
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>{analysis.topPick.tradeType}</Text>
+              </View>
+              <View style={{ backgroundColor: '#232323', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+                <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{analysis.topPick.strategy}</Text>
+              </View>
+              {analysis.topPick.isNexusConfluence && (
+                <View style={{ backgroundColor: '#000', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 8 }}>
+                  <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>NEXUS CONFLUENCE</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.topPickLabel}>Top Pick</Text>
             <Text style={styles.strategyTitle}>{analysis.topPick.strategy}</Text>
+            {/* --- Confidence Bar --- */}
+            <View style={{ marginTop: 8, marginBottom: 10 }}>
+              <View style={{
+                height: 12,
+                backgroundColor: '#eee',
+                borderRadius: 6,
+                overflow: 'hidden',
+                width: '100%',
+              }}>
+                <View
+                  style={{
+                    height: 12,
+                    width: `${Math.min(analysis.topPick.confidence, 100)}%`,
+                    backgroundColor: analysis.topPick.confidence >= 75 ? '#D4AF37' : '#bbb',
+                  }}
+                />
+              </View>
+              <Text style={{
+                alignSelf: 'flex-end',
+                fontSize: 12,
+                fontWeight: 'bold',
+                color: analysis.topPick.confidence >= 75 ? '#D4AF37' : '#333',
+                marginTop: 2,
+              }}>
+                {analysis.topPick.confidence}% Confidence
+              </Text>
+            </View>
             <Text style={styles.label}>
               Signal: <Text style={{ color: analysis.topPick.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{analysis.topPick.signal}</Text>
             </Text>
             <Text style={styles.label}>Bias: {analysis.topPick.bias}</Text>
             <Text style={styles.label}>Trade Type: {analysis.topPick.tradeType}</Text>
             <Text style={styles.label}>Pattern: {analysis.topPick.pattern}</Text>
-            <Text style={styles.label}>
-              Entry: {analysis.topPick.entry} | SL: {analysis.topPick.stopLoss} | TP1: {analysis.topPick.takeProfit}
-            </Text>
-            {analysis.topPick.takeProfit2 && (
-              <Text style={styles.label}>TP2: {analysis.topPick.takeProfit2}</Text>
-            )}
+            {/* --- Entry, SL, TP Levels --- */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: 4 }}>
+              <View style={{ marginRight: 16 }}>
+                <Text style={[styles.label, { color: '#D4AF37', marginBottom: 0 }]}>Entry</Text>
+                <Text>{analysis.topPick.entry}</Text>
+              </View>
+              <View style={{ marginRight: 16 }}>
+                <Text style={[styles.label, { color: '#e53935', marginBottom: 0 }]}>SL</Text>
+                <Text>{analysis.topPick.stopLoss}</Text>
+              </View>
+              <View style={{ marginRight: 16 }}>
+                <Text style={[styles.label, { color: '#388e3c', marginBottom: 0 }]}>TP1</Text>
+                <Text>{analysis.topPick.takeProfit}</Text>
+              </View>
+              {analysis.topPick.takeProfit2 && (
+                <View style={{ marginRight: 16 }}>
+                  <Text style={[styles.label, { color: '#1976d2', marginBottom: 0 }]}>TP2</Text>
+                  <Text>{analysis.topPick.takeProfit2}</Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.label}>
               RR: {formatRR(analysis.topPick.entry, analysis.topPick.stopLoss, analysis.topPick.takeProfit)}
             </Text>
             <Text style={styles.label}>Size: {analysis.topPick.recommendedSize}</Text>
+            {/* --- Confidence Tag --- */}
             {analysis.topPick.confidence >= 75 ? (
               <View style={styles.highConfidenceTag}>
                 <Text style={styles.highConfidenceText}>{analysis.topPick.confidence}% High Confidence</Text>
@@ -321,7 +378,11 @@ export default function App() {
                 <Text style={styles.confidenceText}>{analysis.topPick.confidence}% Confidence</Text>
               </View>
             )}
-            <Text style={styles.commentary}>{highlightTimeframes(analysis.topPick.commentary)}</Text>
+            {/* --- Commentary Section --- */}
+            <View style={styles.commentaryBox}>
+              <MaterialCommunityIcons name="lightbulb-outline" size={16} color={isDark ? '#fff' : '#333'} />
+              <Text style={styles.commentary}>{highlightTimeframes(analysis.topPick.commentary)}</Text>
+            </View>
             <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginTop: 8 }}>
               {savedIds.includes(analysis.topPick.entry) ? (
                 <Text style={{ fontStyle: 'italic', color: '#444' }}>✓ Saved</Text>
@@ -872,3 +933,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
