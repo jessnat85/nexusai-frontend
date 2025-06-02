@@ -8,7 +8,6 @@ import UploadScreen from './components/UploadScreen';
 import ResultsScreen from './components/ResultsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import AboutScreen from './components/AboutScreen';
-import CameraScreen from './components/CameraScreen'; // New Camera screen
 
 const Tab = createBottomTabNavigator();
 
@@ -32,7 +31,6 @@ export default function App() {
         })}
       >
         <Tab.Screen name="Upload" component={UploadScreen} />
-        <Tab.Screen name="Camera" component={CameraScreen} />
         <Tab.Screen name="Results" component={ResultsScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
         <Tab.Screen name="About" component={AboutScreen} />
