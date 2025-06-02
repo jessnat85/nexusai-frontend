@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Picker } from '@react-native-picker/picker';
+import { Modal, FlatList } from 'react-native';
 import {
   View, Text, Image, StyleSheet, ScrollView,
   useColorScheme, TouchableOpacity, TextInput, ActivityIndicator,
@@ -20,6 +20,9 @@ export default function App() {
   // State for predefined question dropdowns
   const [selectedPredefined, setSelectedPredefined] = useState('');
   const [selectedResultQuestions, setSelectedResultQuestions] = useState({});
+  // Modal state for custom picker
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTarget, setModalTarget] = useState(null); // -1 for topPick, or result index
   // Predefined follow-up questions for Picker dropdowns
   const predefinedQuestions = [
     "Why is this trade valid?",
@@ -28,6 +31,22 @@ export default function App() {
     "What does the price structure tell us?",
     "Which indicator confirmed the trade?"
   ];
+  // Handler for opening the modal picker
+  const openModalPicker = (targetIndex) => {
+    setModalTarget(targetIndex);
+    setModalVisible(true);
+  };
+  // Handler for selecting a question from modal
+  const handleModalSelect = (question, targetIndex) => {
+    setModalVisible(false);
+    if (targetIndex === -1) {
+      setSelectedPredefined(question);
+      setClarifyQuestion(prev => ({ ...prev, [-1]: question }));
+    } else {
+      setSelectedResultQuestions(prev => ({ ...prev, [targetIndex]: question }));
+      setClarifyQuestion(prev => ({ ...prev, [targetIndex]: question }));
+    }
+  };
   // Ask AI follow-up for a specific trade result
   const askAIClarify = async (question, res, index) => {
     if (!question || question.trim().length === 0) return;
@@ -470,19 +489,19 @@ export default function App() {
               </View>
               {/* Predefined question dropdown */}
               <View style={styles.dropdownWrapper}>
-                <Picker
-                  selectedValue={selectedPredefined}
-                  onValueChange={(itemValue) => {
-                    setSelectedPredefined(itemValue);
-                    if (itemValue) setClarifyQuestion(prev => ({ ...prev, [-1]: itemValue }));
-                  }}
-                  style={styles.predefinedDropdown}
+                <TouchableOpacity
+                  style={[
+                    styles.predefinedDropdown,
+                    { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#232323' : '#fff' }
+                  ]}
+                  onPress={() => openModalPicker(-1)}
+                  activeOpacity={0.8}
                 >
-                  <Picker.Item label="Select a predefined question..." value="" />
-                  {predefinedQuestions.map((q, index) => (
-                    <Picker.Item key={index} label={q} value={q} />
-                  ))}
-                </Picker>
+                  <Text style={{ color: (selectedPredefined ? (isDark ? '#fff' : '#000') : '#888'), flex: 1 }}>
+                    {selectedPredefined ? selectedPredefined : 'Select a predefined question...'}
+                  </Text>
+                  <Feather name="chevron-down" size={18} color="#D4AF37" />
+                </TouchableOpacity>
               </View>
               {clarifyLoading[-1] && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
@@ -652,19 +671,21 @@ export default function App() {
                 </View>
                 {/* Predefined question dropdown as a dropdown */}
                 <View style={styles.dropdownWrapper}>
-                  <Picker
-                    selectedValue={selectedResultQuestions[index] || ''}
-                    onValueChange={(itemValue) => {
-                      setSelectedResultQuestions(prev => ({ ...prev, [index]: itemValue }));
-                      if (itemValue) setClarifyQuestion(prev => ({ ...prev, [index]: itemValue }));
-                    }}
-                    style={styles.predefinedDropdown}
+                  <TouchableOpacity
+                    style={[
+                      styles.predefinedDropdown,
+                      { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? '#232323' : '#fff' }
+                    ]}
+                    onPress={() => openModalPicker(index)}
+                    activeOpacity={0.8}
                   >
-                    <Picker.Item label="Select a predefined question..." value="" />
-                    {predefinedQuestions.map((q, idx) => (
-                      <Picker.Item key={idx} label={q} value={q} />
-                    ))}
-                  </Picker>
+                    <Text style={{ color: (selectedResultQuestions[index] ? (isDark ? '#fff' : '#000') : '#888'), flex: 1 }}>
+                      {selectedResultQuestions[index]
+                        ? selectedResultQuestions[index]
+                        : 'Select a predefined question...'}
+                    </Text>
+                    <Feather name="chevron-down" size={18} color="#D4AF37" />
+                  </TouchableOpacity>
                 </View>
                 {clarifyLoading[index] && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
@@ -700,6 +721,78 @@ export default function App() {
           ))}
         </View>
       )}
+      {/* Modal Picker for Predefined Questions */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <View style={{
+            backgroundColor: isDark ? '#232323' : '#fff',
+            borderRadius: 12,
+            paddingVertical: 18,
+            paddingHorizontal: 16,
+            width: '85%',
+            maxWidth: 400,
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+          }}>
+            <Text style={{
+              fontWeight: 'bold',
+              fontSize: 17,
+              marginBottom: 12,
+              color: isDark ? '#fff' : '#000'
+            }}>
+              Select a predefined question
+            </Text>
+            <FlatList
+              data={predefinedQuestions}
+              keyExtractor={(item, idx) => idx.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 8,
+                    borderBottomWidth: 0.5,
+                    borderBottomColor: isDark ? '#444' : '#ddd',
+                  }}
+                  onPress={() => handleModalSelect(item, modalTarget)}
+                >
+                  <Text style={{
+                    color: isDark ? '#fff' : '#000',
+                    fontSize: 16,
+                  }}>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              ItemSeparatorComponent={() => <View style={{ height: 2 }} />}
+              style={{ marginBottom: 10 }}
+            />
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={{
+                marginTop: 10,
+                alignSelf: 'flex-end',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+              }}
+            >
+              <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 15 }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
