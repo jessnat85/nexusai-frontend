@@ -76,6 +76,7 @@ export default function App() {
     setClarifyLoading(prev => ({ ...prev, [index]: false }));
   };
   const [expanded, setExpanded] = useState({});
+  // These are now controlled via Settings screen only.
   const [portfolio, setPortfolio] = useState('');
   const [risk, setRisk] = useState('moderate');
   const [assetType, setAssetType] = useState('Forex');
@@ -83,6 +84,12 @@ export default function App() {
   const [tradeStyle, setTradeStyle] = useState('Intraday');
   const [savedIds, setSavedIds] = useState([]);
   const [timeframe, setTimeframe] = useState("5m");
+  // Chart timeframe picker state for chart view
+  const [chartTime, setChartTime] = useState('15m');
+  // Inline dropdown state for asset type
+  const [showAssetTypeDropdown, setShowAssetTypeDropdown] = useState(false);
+  // Inline dropdown state for chart timeframe
+  const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
   const themeStyles = isDark ? styles.dark : styles.light;
@@ -230,108 +237,83 @@ export default function App() {
     }
   };
 
+  // Dropdown options for timeframe and asset type
+  const timeframeOptions = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d"];
+  const assetTypeOptions = ["Forex", "Crypto", "Gold", "Stocks", "Indices", "Commodities", "Futures"];
+
   return (
     <ScrollView style={[styles.container, themeStyles.background]} contentContainerStyle={{ paddingBottom: 40 }}>
       <Text style={[styles.title, themeStyles.text]}>NEXUS AI</Text>
 
-      <View style={styles.settingsBox}>
-        <View style={styles.portfolioInputContainer}>
-          <Text style={styles.dollarSign}>$</Text>
-          <TextInput
-            style={styles.inputWithDollar}
-            placeholder="Portfolio Size"
-            keyboardType="numeric"
-            value={portfolio}
-            onChangeText={setPortfolio}
-          />
-        </View>
-
-        <View style={styles.riskButtons}>
-          {['low', 'moderate', 'high'].map(level => (
-            <TouchableOpacity
-              key={level}
-              style={[styles.riskBtn, risk === level && styles.riskBtnActive]}
-              onPress={() => setRisk(level)}
-            >
-              <Text style={styles.riskBtnText}>{level.charAt(0).toUpperCase() + level.slice(1)}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.assetTypeBox}>
-          <Text style={styles.label}>Asset Type:</Text>
-          <View style={styles.assetTypeOptions}>
-            {['Forex', 'Crypto', 'Gold', 'Stocks', 'Indices'].map(type => (
+      {/* Chart Timeframe Picker (inline dropdown) */}
+      <Text style={styles.dropdownLabel}>Chart Timeframe</Text>
+      <View>
+        <TouchableOpacity
+          onPress={() => setShowTimeframeDropdown(!showTimeframeDropdown)}
+          style={styles.dropdownWrapper}
+        >
+          <Text style={styles.dropdownText}>{timeframe}</Text>
+          <Feather name="chevron-down" size={18} color="#D4AF37" />
+        </TouchableOpacity>
+        {/* Timeframe Dropdown */}
+        {showTimeframeDropdown && (
+          <View style={styles.dropdownList}>
+            {timeframeOptions.map((opt) => (
               <TouchableOpacity
-                key={type}
-                style={[styles.assetTypeBtn, assetType === type && styles.assetTypeBtnActive]}
-                onPress={() => setAssetType(type)}
+                key={opt}
+                onPress={() => {
+                  setTimeframe(opt);
+                  setShowTimeframeDropdown(false);
+                }}
+                style={[
+                  styles.dropdownOption,
+                  timeframe === opt && styles.dropdownOptionSelected
+                ]}
               >
-                <Text style={styles.assetTypeBtnText}>{type}</Text>
+                <Text style={timeframe === opt ? styles.dropdownTextSelected : styles.dropdownOptionText}>
+                  {opt}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-        {/* Chart Timeframe Picker */}
-        <View style={styles.assetTypeBox}>
-          <Text style={styles.label}>Chart Timeframe</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={timeframe}
-              onValueChange={(itemValue) => setTimeframe(itemValue)}
-              style={styles.picker}
-              dropdownIconColor="#000"
-            >
-              {(
-                [
-                  { label: '1m', value: '1m' },
-                  { label: '3m', value: '3m' },
-                  { label: '5m', value: '5m' },
-                  { label: '15m', value: '15m' },
-                  { label: '30m', value: '30m' },
-                  { label: '1h', value: '1h' },
-                  { label: '4h', value: '4h' },
-                  { label: '1d', value: '1d' },
-                ]
-              ).map((option) => (
-                <Picker.Item label={option.label} value={option.value} key={option.value} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-
-        <View style={styles.assetTypeBox}>
-          <Text style={styles.label}>Language:</Text>
-          <View style={styles.assetTypeOptions}>
-            {['English', 'French', 'Spanish'].map(lang => (
-              <TouchableOpacity
-                key={lang}
-                style={[styles.assetTypeBtn, language === lang && styles.assetTypeBtnActive]}
-                onPress={() => setLanguage(lang)}
-              >
-                <Text style={styles.assetTypeBtnText}>{lang}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.assetTypeBox}>
-          <Text style={styles.label}>Trade Style:</Text>
-          <View style={styles.assetTypeOptions}>
-            {['Scalp', 'Intraday', 'Swing'].map(style => (
-              <TouchableOpacity
-                key={style}
-                style={[styles.assetTypeBtn, tradeStyle === style && styles.assetTypeBtnActive]}
-                onPress={() => setTradeStyle(style)}
-              >
-                <Text style={styles.assetTypeBtnText}>{style}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        )}
       </View>
 
-      <TouchableOpacity style={styles.uploadBtn} onPress={handleImageSelection}>
+      {/* Asset Type Selector Inline Dropdown */}
+      <Text style={styles.dropdownLabel}>Asset Type</Text>
+      <View>
+        <TouchableOpacity
+          onPress={() => setShowAssetTypeDropdown(!showAssetTypeDropdown)}
+          style={styles.dropdownWrapper}
+        >
+          <Text style={styles.dropdownText}>{assetType}</Text>
+          <Feather name="chevron-down" size={18} color="#D4AF37" />
+        </TouchableOpacity>
+        {/* Asset Type Dropdown */}
+        {showAssetTypeDropdown && (
+          <View style={styles.dropdownList}>
+            {assetTypeOptions.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                onPress={() => {
+                  setAssetType(opt);
+                  setShowAssetTypeDropdown(false);
+                }}
+                style={[
+                  styles.dropdownOption,
+                  assetType === opt && styles.dropdownOptionSelected
+                ]}
+              >
+                <Text style={assetType === opt ? styles.dropdownTextSelected : styles.dropdownOptionText}>
+                  {opt}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
+      <TouchableOpacity style={[styles.uploadBtn, { marginTop: 12, alignSelf: 'center' }]} onPress={handleImageSelection}>
         <AntDesign name="upload" size={20} color="white" />
         <Text style={styles.uploadText}>Upload Chart</Text>
       </TouchableOpacity>
@@ -368,8 +350,14 @@ export default function App() {
               </View>
               {/* Remove old Nexus Confluence badge here if any */}
             </View>
-            <Text style={styles.topPickLabel}>Top Pick</Text>
-            <Text style={styles.strategyTitle}>{analysis.topPick.strategy}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Feather name="star" size={18} color="#D4AF37" style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#000' }}>Top Pick</Text>
+            </View>
+            <View style={styles.strategyTitleRow}>
+              <Feather name="activity" size={16} color="#000" style={{ marginRight: 4 }} />
+              <Text style={styles.strategyTitle}>{analysis.topPick.strategy}</Text>
+            </View>
             {/* --- NEXUS CONFLUENCE TRADE badge inside Top Pick card if superTrade --- */}
             {analysis.superTrade && (
               <View style={styles.confluenceBadge}>
@@ -403,33 +391,36 @@ export default function App() {
                 {analysis.topPick.confidence}% Confidence
               </Text>
             </View>
-            <Text style={styles.label}>
-              Signal: <Text style={{ color: analysis.topPick.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{analysis.topPick.signal}</Text>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
+              Signal: <Text style={{ fontWeight: 'normal', color: analysis.topPick.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{analysis.topPick.signal}</Text>
             </Text>
-            <Text style={styles.label}>Bias: {analysis.topPick.bias}</Text>
-            <Text style={styles.label}>Trade Type: {analysis.topPick.tradeType}</Text>
-            <Text style={styles.label}>Pattern: {analysis.topPick.pattern}</Text>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
+              Bias: <Text style={{ fontWeight: 'normal' }}>{analysis.topPick.bias}</Text>
+            </Text>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
+              Trade Type: <Text style={{ fontWeight: 'normal' }}>{analysis.topPick.tradeType}</Text>
+            </Text>
+            <Text style={[styles.label, { fontWeight: '600' }]}>
+              Pattern: <Text style={{ fontWeight: 'normal' }}>{analysis.topPick.pattern}</Text>
+            </Text>
             {/* --- Entry, SL, TP Levels --- */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: 4 }}>
-              <View style={{ marginRight: 16 }}>
-                <Text style={[styles.label, { color: '#D4AF37', marginBottom: 0 }]}>Entry</Text>
-                <Text>{analysis.topPick.entry}</Text>
-              </View>
-              <View style={{ marginRight: 16 }}>
-                <Text style={[styles.label, { color: '#e53935', marginBottom: 0 }]}>SL</Text>
-                <Text>{analysis.topPick.stopLoss}</Text>
-              </View>
-              <View style={{ marginRight: 16 }}>
-                <Text style={[styles.label, { color: '#388e3c', marginBottom: 0 }]}>TP1</Text>
-                <Text>{analysis.topPick.takeProfit}</Text>
-              </View>
-              {analysis.topPick.takeProfit2 && (
-                <View style={{ marginRight: 16 }}>
-                  <Text style={[styles.label, { color: '#1976d2', marginBottom: 0 }]}>TP2</Text>
-                  <Text>{analysis.topPick.takeProfit2}</Text>
-                </View>
-              )}
-            </View>
+            <Text style={styles.label}>
+              <Text style={{ fontWeight: '700' }}>Entry:</Text>
+              <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.entry}</Text>
+              {" | "}
+              <Text style={{ fontWeight: '700' }}>SL:</Text>
+              <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.stopLoss}</Text>
+              {" | "}
+              <Text style={{ fontWeight: '700' }}>TP1:</Text>
+              <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.takeProfit}</Text>
+              {analysis.topPick.takeProfit2 ? (
+                <>
+                  {" | "}
+                  <Text style={{ fontWeight: '700' }}>TP2:</Text>
+                  <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.takeProfit2}</Text>
+                </>
+              ) : null}
+            </Text>
             <Text style={styles.label}>
               RR: {formatRR(analysis.topPick.entry, analysis.topPick.stopLoss, analysis.topPick.takeProfit)}
             </Text>
@@ -518,7 +509,7 @@ export default function App() {
                 </TouchableOpacity>
               </View>
               {/* Predefined question dropdown */}
-              <View style={styles.dropdownWrapper}>
+              <View style={styles.predefinedDropdownWrapper}>
                 <TouchableOpacity
                   style={[
                     styles.predefinedDropdown,
@@ -574,41 +565,50 @@ export default function App() {
             <View key={index} style={styles.strategyBox}>
               <View style={styles.strategyTitleRow}>
                 <Feather name="activity" size={16} color={isDark ? '#fff' : '#000'} style={{ marginRight: 4 }} />
-                <Text style={styles.strategyTitle}>{res.strategy}</Text>
+                <Text style={[styles.strategyTitle, { fontSize: 15, fontWeight: '600' }]}>{res.strategy}</Text>
               </View>
-              <Text>
-                <Text style={styles.label}>Signal:</Text> <Text style={{ color: res.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{res.signal}</Text>
-              </Text>
-              <Text>
-                <Text style={styles.label}>Bias:</Text> {res.bias}
-              </Text>
-              <Text>
-                <Text style={styles.label}>Trade Type:</Text> {res.tradeType}
-              </Text>
-              <Text>
-                <Text style={styles.label}>Pattern:</Text> {res.pattern}
-              </Text>
-              {/* Strategy value fields with label/value style */}
-              <Text style={styles.label}>
-                Entry: <Text style={styles.value}>{res.entry}</Text>
-              </Text>
-              <Text style={styles.label}>
-                Stop Loss: <Text style={styles.value}>{res.stopLoss}</Text>
-              </Text>
-              <Text style={styles.label}>
-                Take Profit: <Text style={styles.value}>{res.takeProfit}</Text>
-              </Text>
-              {res.takeProfit2 && (
-                <Text style={styles.label}>
-                  Take Profit 2: <Text style={styles.value}>{res.takeProfit2}</Text>
+              <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <View style={{ backgroundColor: '#D4AF37', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginRight: 8 }}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>{res.tradeType}</Text>
+                </View>
+                <View style={{ backgroundColor: '#232323', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+                  <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{res.strategy}</Text>
+                </View>
+              </View>
+              <View style={{ marginBottom: 6 }}>
+                <Text style={[styles.label, { fontSize: 15, fontWeight: '600' }]}>
+                  Signal: <Text style={{ color: res.signal === 'Buy' ? 'darkgreen' : 'darkred', fontWeight: 'normal' }}>{res.signal}</Text> | 
+                  Bias: <Text style={{ fontWeight: 'normal' }}>{res.bias}</Text>
                 </Text>
-              )}
-              <Text style={styles.label}>
-                RR: <Text style={styles.value}>{formatRR(res.entry, res.stopLoss, res.takeProfit)}</Text>
+              </View>
+              <Text style={[styles.label, { fontSize: 15, fontWeight: '600', marginBottom: 6 }]}>
+                Pattern: <Text style={{ fontWeight: 'normal' }}>{res.pattern}</Text>
               </Text>
+              {/* Entry, SL, TP Levels */}
               <Text style={styles.label}>
-                Size: <Text style={styles.value}>{res.recommendedSize}</Text>
+                <Text style={{ fontWeight: '700' }}>Entry:</Text>
+                <Text style={{ fontWeight: 'normal' }}> {res.entry}</Text>
+                {" | "}
+                <Text style={{ fontWeight: '700' }}>SL:</Text>
+                <Text style={{ fontWeight: 'normal' }}> {res.stopLoss}</Text>
+                {" | "}
+                <Text style={{ fontWeight: '700' }}>TP1:</Text>
+                <Text style={{ fontWeight: 'normal' }}> {res.takeProfit}</Text>
+                {res.takeProfit2 ? (
+                  <>
+                    {" | "}
+                    <Text style={{ fontWeight: '700' }}>TP2:</Text>
+                    <Text style={{ fontWeight: 'normal' }}> {res.takeProfit2}</Text>
+                  </>
+                ) : null}
               </Text>
+              <Text style={[styles.label, { fontSize: 15 }]}>
+                RR: <Text style={{ fontWeight: 'normal', color: '#333' }}>{formatRR(res.entry, res.stopLoss, res.takeProfit)}</Text>
+              </Text>
+              <Text style={[styles.label, { fontSize: 15 }]}>
+                Size: <Text style={{ fontWeight: 'normal', color: '#333' }}>{res.recommendedSize}</Text>
+              </Text>
+              {/* Confidence badge (match Top Pick style) */}
               {res.confidence >= 75 ? (
                 <View style={styles.highConfidenceTag}>
                   <Text style={styles.highConfidenceText}>{res.confidence}% High Confidence</Text>
@@ -648,25 +648,25 @@ export default function App() {
               <View style={{ marginTop: 10 }}>
                 <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Ask AI a follow-up about this trade:</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <TextInput
-                    style={{
-                      flex: 1,
-                      borderWidth: 1,
-                      borderColor: '#D4AF37',
-                      borderRadius: 8,
-                      padding: 8,
-                      backgroundColor: isDark ? '#222' : '#fff',
-                      color: isDark ? '#fff' : '#000',
-                      marginRight: 8,
-                    }}
-                    placeholder="Type your question..."
-                    placeholderTextColor={isDark ? '#aaa' : '#888'}
-                    value={clarifyQuestion[index] || ''}
-                    onChangeText={text =>
-                      setClarifyQuestion(prev => ({ ...prev, [index]: text }))
-                    }
-                    editable={!clarifyLoading[index]}
-                  />
+              <TextInput
+                style={{
+                  flex: 1,
+                  borderWidth: 1,
+                  borderColor: '#D4AF37',
+                  borderRadius: 8,
+                  padding: 8,
+                  backgroundColor: isDark ? '#222' : '#fff',
+                  color: isDark ? '#fff' : '#000',
+                  marginRight: 8,
+                }}
+                placeholder="Type your question..."
+                placeholderTextColor={isDark ? '#aaa' : '#888'}
+                value={clarifyQuestion[index] || ''}
+                onChangeText={text =>
+                  setClarifyQuestion(prev => ({ ...prev, [index]: text }))
+                }
+                editable={!clarifyLoading[index]}
+              />
                   {/* Microphone Button Placeholder */}
                   <TouchableOpacity
                     style={{
@@ -700,7 +700,7 @@ export default function App() {
                   </TouchableOpacity>
                 </View>
                 {/* Predefined question dropdown as a dropdown */}
-                <View style={styles.dropdownWrapper}>
+                <View style={styles.predefinedDropdownWrapper}>
                   <TouchableOpacity
                     style={[
                       styles.predefinedDropdown,
@@ -827,22 +827,58 @@ export default function App() {
   );
 }
 const styles = StyleSheet.create({
+  chartTimeContainer: {
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    borderRadius: 10,
+    marginVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    width: '90%',
+    alignSelf: 'center',
+    backgroundColor: '#000',
+  },
+  chartTimeLabel: {
+    color: '#D4AF37',
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  chartTimePicker: {
+    color: '#D4AF37',
+    backgroundColor: '#000',
+  },
   pickerWrapper: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
-    paddingHorizontal: 12,
     marginVertical: 10,
     width: '90%',
     alignSelf: 'center',
-    height: 44,
-    justifyContent: 'center',
-    overflow: 'hidden',
     backgroundColor: '#fff',
+    paddingVertical: Platform.OS === 'ios' ? 12 : 0,
+    paddingHorizontal: 12,
   },
   picker: {
-    height: 44,
     width: '100%',
+    height: Platform.OS === 'ios' ? undefined : 44,
+    color: '#000',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    marginVertical: 10,
+    width: '90%',
+    alignSelf: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: Platform.OS === 'ios' ? 12 : 0,
+    paddingHorizontal: 12,
+  },
+  pickerLabel: {
+    fontWeight: 'bold',
+    marginBottom: 4,
+    marginLeft: 4,
+    color: '#333',
   },
   container: {
     flex: 1,
@@ -987,20 +1023,19 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 8,
     overflow: 'hidden',
+    borderColor: '#D4AF37',
+    borderWidth: 1,
   },
   strategyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
     marginBottom: 6,
+    color: '#000',
   },
   strategyTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
-  },
-  label: {
-    fontWeight: 'bold',
-    marginBottom: 4,
   },
   value: {
     fontWeight: 'normal',
@@ -1020,7 +1055,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   highConfidenceTag: {
-    backgroundColor: '#000',
+    backgroundColor: '#D4AF37',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -1029,7 +1064,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   highConfidenceText: {
-    color: '#D4AF37',
+    color: '#fff',
     fontWeight: 'bold',
   },
   commentary: {
@@ -1112,7 +1147,24 @@ const styles = StyleSheet.create({
   },
   dropdownWrapper: {
     marginVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    alignSelf: 'center',
+    width: '90%',
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 16,
+    paddingRight: 12,
+    height: 48,
+  },
+  predefinedDropdownWrapper: {
+    width: '100%',
+    marginTop: 8,
   },
   predefinedDropdown: {
     backgroundColor: '#fff',
@@ -1126,15 +1178,92 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dropdown: {
-    backgroundColor: '#fff',
-    borderColor: '#ccc',
     borderWidth: 1,
+    borderColor: '#D4AF37',
+    backgroundColor: '#fff',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     width: '90%',
     alignSelf: 'center',
     marginVertical: 10,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '600',
+    textAlign: 'left',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderColor: '#D4AF37',
+    borderWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    width: '85%',
+    maxWidth: 350,
+    alignSelf: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  modalItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: {
+    color: '#D4AF37',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Dropdown Modal Styles
+  modalSelector: {
+    backgroundColor: '#111',
+    borderColor: '#D4AF37',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignSelf: 'center',
+    marginVertical: 10,
+    width: '90%',
+  },
+  modalOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomColor: '#333',
+    borderBottomWidth: 1,
+    backgroundColor: '#000',
+  },
+  modalOptionText: {
+    color: '#D4AF37',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalValueBox: {
+    backgroundColor: '#111',
+    borderColor: '#D4AF37',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+  },
+  modalValueText: {
+    color: '#D4AF37',
+    fontWeight: '600',
   },
   timeframePickerContainer: {
     width: '90%',
@@ -1151,11 +1280,140 @@ const styles = StyleSheet.create({
     height: 44,
     color: '#333',
   },
-  label: {
-    marginTop: 10,
-    marginLeft: 20,
+  // --- Fixed and reformatted recommended size styles ---
+  recommendedSizeBox: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 12,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  recommendedSizeTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  recommendedSizeValue: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#333',
+    fontWeight: '600',
+  },
+  badge: {
+    backgroundColor: '#232323',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 6,
+    alignSelf: 'flex-start',
+  },
+  badgeText: {
+    color: '#D4AF37',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  tradeTypeBadge: {
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 6,
+    alignSelf: 'flex-start',
+  },
+  tradeTypeText: {
+    color: '#D4AF37',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  pickerTitle: {
+    color: '#D4AF37',
+    fontSize: 16,
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: '#111',
+    color: '#fff',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#D4AF37',
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#000',
+    borderRadius: 8,
+    marginTop: 10,
+    marginHorizontal: 4,
+    padding: 10,
+  },
+  resultBox: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 5,
+  },
+  resultBoxBorder: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#D4AF37',
+  },
+  resultLabel: {
+    color: '#D4AF37',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  resultValue: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  dropdownList: {
+    backgroundColor: '#fff',
+    borderColor: '#D4AF37',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginTop: 4,
+    width: '90%',
+    alignSelf: 'center',
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  dropdownOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#000',
+    fontWeight: '500',
+  },
+  dropdownOptionSelected: {
+    backgroundColor: '#fdf6e3',
+    borderRadius: 8,
+  },
+  dropdownTextSelected: {
+    color: '#D4AF37',
+    fontWeight: '700',
+  },
+  dropdownOptionText: {
+    color: '#000',
+    fontWeight: '500',
+  },
+  dropdownLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#D4AF37',
+    textAlign: 'left',
+    marginLeft: 20,
+    marginTop: 16,
+    marginBottom: 10,
+    textTransform: 'none',
+    letterSpacing: 0.5,
   },
 });
