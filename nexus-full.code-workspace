@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run FastAPI Backend",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/nexus-ai-backend/venv/bin/uvicorn",
+      "args": [
+        "chart_ai_backend:app",
+        "--reload"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/nexus-ai-backend"
+    },
+    {
+      "name": "Run Frontend (React Native)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "cwd": "${workspaceFolder}/smelly-green-truffles",
+      "console": "integratedTerminal"
+    }
+  ],
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "../nexus-ai-backend"
+    }
+  ]
+}
