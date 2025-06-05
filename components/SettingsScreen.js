@@ -6,6 +6,7 @@ export default function SettingsScreen() {
   const [language, setLanguage] = useState('');
   const [risk, setRisk] = useState('');
   const [portfolio, setPortfolio] = useState('');
+  const [tradeStyle, setTradeStyle] = useState('');
 
   return (
     <View style={styles.container}>
@@ -53,6 +54,21 @@ export default function SettingsScreen() {
           <Picker.Item label="Low" value="low" />
           <Picker.Item label="Moderate" value="moderate" />
           <Picker.Item label="High" value="high" />
+        </Picker>
+      </View>
+
+      <Text style={styles.label}>Trade Style</Text>
+      <View style={styles.pickerBox}>
+        <Picker
+          selectedValue={tradeStyle}
+          onValueChange={setTradeStyle}
+          style={styles.picker}
+          dropdownIconColor="#D4AF37"
+        >
+          <Picker.Item label="Select Trade Style" value="" enabled={false} />
+          <Picker.Item label="Scalp" value="Scalp" />
+          <Picker.Item label="Intraday" value="Intraday" />
+          <Picker.Item label="Swing" value="Swing" />
         </Picker>
       </View>
     </View>

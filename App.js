@@ -1,4 +1,5 @@
 import React from 'react';
+import { SettingsProvider } from './SettingsContext';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useColorScheme } from 'react-native';
@@ -15,25 +16,27 @@ export default function App() {
   const scheme = useColorScheme();
 
   return (
-    <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => {
-            if (route.name === 'Upload') return <AntDesign name="upload" size={size} color={color} />;
-            if (route.name === 'Results') return <Feather name="bar-chart-2" size={size} color={color} />;
-            if (route.name === 'Settings') return <Feather name="settings" size={size} color={color} />;
-            if (route.name === 'About') return <AntDesign name="infocirlceo" size={size} color={color} />;
-          },
-          tabBarActiveTintColor: '#D4AF37',
-          tabBarInactiveTintColor: 'gray',
-        })}
-      >
-        <Tab.Screen name="Upload" component={NexusAI} />
-        <Tab.Screen name="Results" component={ResultsScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
-        <Tab.Screen name="About" component={AboutScreen} />
-      </Tab.Navigator>
-    </NavigationContainer>
+    <SettingsProvider>
+      <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => {
+              if (route.name === 'Upload') return <AntDesign name="upload" size={size} color={color} />;
+              if (route.name === 'Results') return <Feather name="bar-chart-2" size={size} color={color} />;
+              if (route.name === 'Settings') return <Feather name="settings" size={size} color={color} />;
+              if (route.name === 'About') return <AntDesign name="infocirlceo" size={size} color={color} />;
+            },
+            tabBarActiveTintColor: '#D4AF37',
+            tabBarInactiveTintColor: 'gray',
+          })}
+        >
+          <Tab.Screen name="Upload" component={NexusAI} />
+          <Tab.Screen name="Results" component={ResultsScreen} />
+          <Tab.Screen name="Settings" component={SettingsScreen} />
+          <Tab.Screen name="About" component={AboutScreen} />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </SettingsProvider>
   );
 }

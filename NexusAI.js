@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+// Backend URL for mobile device access
+const BACKEND_URL = "http://192.168.10.104:8001/analyze";
+import React, { useState, useContext } from 'react';
+import { translations } from './translations';
+import { SettingsContext } from './SettingsContext';
 import { Picker } from '@react-native-picker/picker';
 import { Modal, FlatList } from 'react-native';
 import {
@@ -76,12 +80,21 @@ export default function App() {
     setClarifyLoading(prev => ({ ...prev, [index]: false }));
   };
   const [expanded, setExpanded] = useState({});
-  // These are now controlled via Settings screen only.
-  const [portfolio, setPortfolio] = useState('');
-  const [risk, setRisk] = useState('moderate');
-  const [assetType, setAssetType] = useState('Forex');
-  const [language, setLanguage] = useState('English');
-  const [tradeStyle, setTradeStyle] = useState('Intraday');
+  // Get settings from context
+  const {
+    portfolio,
+    setPortfolio,
+    risk,
+    setRisk,
+    assetType,
+    setAssetType,
+    language,
+    setLanguage,
+    tradeStyle,
+    setTradeStyle,
+  } = useContext(SettingsContext);
+  const t = translations[language] || {};
+  const translated = (text) => t[text] || text;
   const [savedIds, setSavedIds] = useState([]);
   const [timeframe, setTimeframe] = useState("5m");
   // Chart timeframe picker state for chart view
@@ -178,19 +191,23 @@ export default function App() {
       name: 'chart.png',
       type: 'image/png',
     });
-    formData.append('portfolioSize', portfolio || '10000');
-    formData.append('riskTolerance', risk);
+    // Append context settings
+    formData.append('portfolioSize', portfolio);
+    formData.append('risk', risk);
+    formData.append('language', language);
     formData.append('assetType', assetType);
-    formData.append('language', language || 'English');
-    formData.append('userId', 'jessnat');
     formData.append('tradeStyle', tradeStyle);
+    // Additional fields
+    formData.append('userId', 'jessnat');
     formData.append('timeframe', timeframe);
 
     try {
-      const response = await fetch("https://nexus-ai-backend-1.onrender.com/analyze", {
-        method: 'POST',
+      const response = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data"
+        },
         body: formData,
-        headers: { 'Accept': 'application/json' },
       });
 
       if (!response.ok) {
@@ -246,7 +263,7 @@ export default function App() {
       <Text style={[styles.title, themeStyles.text]}>NEXUS AI</Text>
 
       {/* Chart Timeframe Picker (inline dropdown) */}
-      <Text style={styles.dropdownLabel}>Chart Timeframe</Text>
+      <Text style={styles.dropdownLabel}>{translated("Chart Timeframe")}</Text>
       <View>
         <TouchableOpacity
           onPress={() => setShowTimeframeDropdown(!showTimeframeDropdown)}
@@ -280,7 +297,7 @@ export default function App() {
       </View>
 
       {/* Asset Type Selector Inline Dropdown */}
-      <Text style={styles.dropdownLabel}>Asset Type</Text>
+      <Text style={styles.dropdownLabel}>{translated("Asset Type")}</Text>
       <View>
         <TouchableOpacity
           onPress={() => setShowAssetTypeDropdown(!showAssetTypeDropdown)}
@@ -315,19 +332,19 @@ export default function App() {
 
       <TouchableOpacity style={[styles.uploadBtn, { marginTop: 12, alignSelf: 'center' }]} onPress={handleImageSelection}>
         <AntDesign name="upload" size={20} color="white" />
-        <Text style={styles.uploadText}>Upload Chart</Text>
+        <Text style={styles.uploadText}>{translated("Upload Chart")}</Text>
       </TouchableOpacity>
 
       {image && <Image source={{ uri: image }} style={styles.chartImage} />}
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D4AF37" />
-          <Text style={[styles.loading, themeStyles.text]}>Analyzing chart</Text>
+          <Text style={[styles.loading, themeStyles.text]}>{translated("Analyzing chart")}</Text>
         </View>
       )}
 
       {!loading && analysis?.results?.length === 0 && (
-        <Text style={[styles.noSetupText, themeStyles.text]}>No trade setup detected for this chart.</Text>
+        <Text style={[styles.noSetupText, themeStyles.text]}>{translated("No trade setup detected for this chart.")}</Text>
       )}
 
       {analysis?.conflictCommentary && (
@@ -343,25 +360,25 @@ export default function App() {
             {/* --- Trade Type and Strategy Badges --- */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
               <View style={{ backgroundColor: '#D4AF37', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginRight: 8 }}>
-                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>{analysis.topPick.tradeType}</Text>
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>{translated(analysis.topPick.tradeType)}</Text>
               </View>
               <View style={{ backgroundColor: '#232323', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
-                <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{analysis.topPick.strategy}</Text>
+                <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{translated(analysis.topPick.strategy)}</Text>
               </View>
               {/* Remove old Nexus Confluence badge here if any */}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
               <Feather name="star" size={18} color="#D4AF37" style={{ marginRight: 6 }} />
-              <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#000' }}>Top Pick</Text>
+              <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#000' }}>{translated("Top Pick")}</Text>
             </View>
             <View style={styles.strategyTitleRow}>
               <Feather name="activity" size={16} color="#000" style={{ marginRight: 4 }} />
-              <Text style={styles.strategyTitle}>{analysis.topPick.strategy}</Text>
+              <Text style={styles.strategyTitle}>{translated(analysis.topPick.strategy)}</Text>
             </View>
             {/* --- NEXUS CONFLUENCE TRADE badge inside Top Pick card if superTrade --- */}
             {analysis.superTrade && (
               <View style={styles.confluenceBadge}>
-                <Text style={styles.confluenceText}>NEXUS CONFLUENCE TRADE</Text>
+                <Text style={styles.confluenceText}>{translated("NEXUS CONFLUENCE TRADE")}</Text>
               </View>
             )}
             {/* --- Confidence Bar --- */}
@@ -388,51 +405,51 @@ export default function App() {
                 color: analysis.topPick.confidence >= 75 ? '#D4AF37' : '#333',
                 marginTop: 2,
               }}>
-                {analysis.topPick.confidence}% Confidence
+                {`${analysis.topPick.confidence}% ${translated("Confidence")}`}
               </Text>
             </View>
             <Text style={[styles.label, { fontWeight: '600' }]}>
-              Signal: <Text style={{ fontWeight: 'normal', color: analysis.topPick.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{analysis.topPick.signal}</Text>
+              {translated("Signal")}: <Text style={{ fontWeight: 'normal', color: analysis.topPick.signal === 'Buy' ? 'darkgreen' : 'darkred' }}>{translated(analysis.topPick.signal)}</Text>
             </Text>
             <Text style={[styles.label, { fontWeight: '600' }]}>
-              Bias: <Text style={{ fontWeight: 'normal' }}>{analysis.topPick.bias}</Text>
+              {translated("Bias")}: <Text style={{ fontWeight: 'normal' }}>{translated(analysis.topPick.bias)}</Text>
             </Text>
             <Text style={[styles.label, { fontWeight: '600' }]}>
-              Trade Type: <Text style={{ fontWeight: 'normal' }}>{analysis.topPick.tradeType}</Text>
+              {`${translated("Trade Type")}: `}<Text style={{ fontWeight: 'normal' }}>{translated(analysis.topPick.tradeType)}</Text>
             </Text>
             <Text style={[styles.label, { fontWeight: '600' }]}>
-              Pattern: <Text style={{ fontWeight: 'normal' }}>{analysis.topPick.pattern}</Text>
+              {translated("Pattern")}: <Text style={{ fontWeight: 'normal' }}>{translated(analysis.topPick.pattern)}</Text>
             </Text>
             {/* --- Entry, SL, TP Levels --- */}
             <Text style={styles.label}>
-              <Text style={{ fontWeight: '700' }}>Entry:</Text>
+              <Text style={{ fontWeight: '700' }}>{translated("Entry")}:</Text>
               <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.entry}</Text>
               {" | "}
-              <Text style={{ fontWeight: '700' }}>SL:</Text>
+              <Text style={{ fontWeight: '700' }}>{translated("SL")}:</Text>
               <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.stopLoss}</Text>
               {" | "}
-              <Text style={{ fontWeight: '700' }}>TP1:</Text>
+              <Text style={{ fontWeight: '700' }}>{translated("TP1")}:</Text>
               <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.takeProfit}</Text>
               {analysis.topPick.takeProfit2 ? (
                 <>
                   {" | "}
-                  <Text style={{ fontWeight: '700' }}>TP2:</Text>
+                  <Text style={{ fontWeight: '700' }}>{translated("TP2")}:</Text>
                   <Text style={{ fontWeight: 'normal' }}> {analysis.topPick.takeProfit2}</Text>
                 </>
               ) : null}
             </Text>
             <Text style={styles.label}>
-              RR: {formatRR(analysis.topPick.entry, analysis.topPick.stopLoss, analysis.topPick.takeProfit)}
+              {translated("RR")}: {formatRR(analysis.topPick.entry, analysis.topPick.stopLoss, analysis.topPick.takeProfit)}
             </Text>
-            <Text style={styles.label}>Size: {analysis.topPick.recommendedSize}</Text>
+            <Text style={styles.label}>{translated("Size")}: {analysis.topPick.recommendedSize}</Text>
             {/* --- Confidence Tag --- */}
             {analysis.topPick.confidence >= 75 ? (
               <View style={styles.highConfidenceTag}>
-                <Text style={styles.highConfidenceText}>{analysis.topPick.confidence}% High Confidence</Text>
+                <Text style={styles.highConfidenceText}>{`${analysis.topPick.confidence}% ${translated("High Confidence")}`}</Text>
               </View>
             ) : (
               <View style={styles.confidenceTag}>
-                <Text style={styles.confidenceText}>{analysis.topPick.confidence}% Confidence</Text>
+                <Text style={styles.confidenceText}>{`${analysis.topPick.confidence}% ${translated("Confidence")}`}</Text>
               </View>
             )}
             {/* --- Commentary Section --- */}
@@ -442,20 +459,20 @@ export default function App() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginTop: 8 }}>
               {savedIds.includes(analysis.topPick.entry) ? (
-                <Text style={{ fontStyle: 'italic', color: '#444' }}>✓ Saved</Text>
+                <Text style={{ fontStyle: 'italic', color: '#444' }}>✓ {translated("Saved")}</Text>
               ) : (
                 <TouchableOpacity
                   style={styles.saveBtnCompact}
                   onPress={() => saveTradeToHistory(analysis.topPick)}
                 >
                   <Feather name="save" size={14} color="white" />
-                  <Text style={styles.saveBtnTextCompact}>Save</Text>
+                  <Text style={styles.saveBtnTextCompact}>{translated("Save")}</Text>
                 </TouchableOpacity>
               )}
             </View>
             {/* --- Clarify/Ask AI follow-up section for Top Pick (index: -1) --- */}
             <View style={{ marginTop: 10 }}>
-              <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Ask AI a follow-up about this trade:</Text>
+              <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>{translated("Ask AI a follow-up about this trade:")}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TextInput
                   style={{
@@ -468,7 +485,7 @@ export default function App() {
                     color: isDark ? '#fff' : '#000',
                     marginRight: 8,
                   }}
-                  placeholder="Type your question..."
+                  placeholder={translated("Type your question...")}
                   placeholderTextColor={isDark ? '#aaa' : '#888'}
                   value={clarifyQuestion[-1] || ''}
                   onChangeText={text =>
@@ -486,7 +503,7 @@ export default function App() {
                   }}
                   onPress={() => {
                     // Placeholder for voice input logic
-                    alert('Voice input coming soon!');
+                    alert(translated('Voice input coming soon!'));
                   }}
                 >
                   <Feather name="mic" size={18} color="#D4AF37" />
@@ -505,7 +522,7 @@ export default function App() {
                   disabled={clarifyLoading[-1] || !(clarifyQuestion[-1] && clarifyQuestion[-1].trim())}
                 >
                   <Feather name="message-circle" size={16} color="#fff" />
-                  <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>Ask AI</Text>
+                  <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>{translated("Ask AI")}</Text>
                 </TouchableOpacity>
               </View>
               {/* Predefined question dropdown */}
@@ -519,7 +536,7 @@ export default function App() {
                   activeOpacity={0.8}
                 >
                   <Text style={{ color: (selectedPredefined ? (isDark ? '#fff' : '#000') : '#888'), flex: 1 }}>
-                    {selectedPredefined ? selectedPredefined : 'Select a predefined question...'}
+                    {selectedPredefined ? selectedPredefined : translated('Select a predefined question...')}
                   </Text>
                   <Feather name="chevron-down" size={18} color="#D4AF37" />
                 </TouchableOpacity>
@@ -527,7 +544,7 @@ export default function App() {
               {clarifyLoading[-1] && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
                   <ActivityIndicator size="small" color="#D4AF37" />
-                  <Text style={{ marginLeft: 8, color: isDark ? '#fff' : '#000' }}>AI is thinking...</Text>
+                  <Text style={{ marginLeft: 8, color: isDark ? '#fff' : '#000' }}>{translated("AI is thinking...")}</Text>
                 </View>
               )}
               {clarifyResponse[-1] && !clarifyLoading[-1] && (
@@ -544,11 +561,11 @@ export default function App() {
                     onPress={() => {
                       // Log feedback or send to backend in the future
                       console.log('👍 Liked top pick AI response!');
-                      alert('Thank you for your feedback!');
+                      alert(translated('Thank you for your feedback!'));
                     }}
                   >
                     <AntDesign name="like1" size={18} color="#D4AF37" />
-                    <Text style={{ marginLeft: 5, color: '#D4AF37', fontWeight: 'bold' }}>Like</Text>
+                    <Text style={{ marginLeft: 5, color: '#D4AF37', fontWeight: 'bold' }}>{translated("Like")}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -565,62 +582,62 @@ export default function App() {
             <View key={index} style={styles.strategyBox}>
               <View style={styles.strategyTitleRow}>
                 <Feather name="activity" size={16} color={isDark ? '#fff' : '#000'} style={{ marginRight: 4 }} />
-                <Text style={[styles.strategyTitle, { fontSize: 15, fontWeight: '600' }]}>{res.strategy}</Text>
+                <Text style={[styles.strategyTitle, { fontSize: 15, fontWeight: '600' }]}>{translated(res.strategy)}</Text>
               </View>
               <View style={{ flexDirection: 'row', marginBottom: 8 }}>
                 <View style={{ backgroundColor: '#D4AF37', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, marginRight: 8 }}>
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>{res.tradeType}</Text>
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 12 }}>{translated(res.tradeType)}</Text>
                 </View>
                 <View style={{ backgroundColor: '#232323', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
-                  <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{res.strategy}</Text>
+                  <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 12 }}>{translated(res.strategy)}</Text>
                 </View>
               </View>
               <View style={{ marginBottom: 6 }}>
                 <Text style={[styles.label, { fontSize: 15, fontWeight: '600' }]}>
-                  Signal: <Text style={{ color: res.signal === 'Buy' ? 'darkgreen' : 'darkred', fontWeight: 'normal' }}>{res.signal}</Text> | 
-                  Bias: <Text style={{ fontWeight: 'normal' }}>{res.bias}</Text>
+                  {translated("Signal")}: <Text style={{ color: res.signal === 'Buy' ? 'darkgreen' : 'darkred', fontWeight: 'normal' }}>{translated(res.signal)}</Text> | 
+                  {translated("Bias")}: <Text style={{ fontWeight: 'normal' }}>{translated(res.bias)}</Text>
                 </Text>
               </View>
               <Text style={[styles.label, { fontSize: 15, fontWeight: '600', marginBottom: 6 }]}>
-                Pattern: <Text style={{ fontWeight: 'normal' }}>{res.pattern}</Text>
+                {translated("Pattern")}: <Text style={{ fontWeight: 'normal' }}>{translated(res.pattern)}</Text>
               </Text>
               {/* Entry, SL, TP Levels */}
               <Text style={styles.label}>
-                <Text style={{ fontWeight: '700' }}>Entry:</Text>
+                <Text style={{ fontWeight: '700' }}>{translated("Entry")}:</Text>
                 <Text style={{ fontWeight: 'normal' }}> {res.entry}</Text>
                 {" | "}
-                <Text style={{ fontWeight: '700' }}>SL:</Text>
+                <Text style={{ fontWeight: '700' }}>{translated("SL")}:</Text>
                 <Text style={{ fontWeight: 'normal' }}> {res.stopLoss}</Text>
                 {" | "}
-                <Text style={{ fontWeight: '700' }}>TP1:</Text>
+                <Text style={{ fontWeight: '700' }}>{translated("TP1")}:</Text>
                 <Text style={{ fontWeight: 'normal' }}> {res.takeProfit}</Text>
                 {res.takeProfit2 ? (
                   <>
                     {" | "}
-                    <Text style={{ fontWeight: '700' }}>TP2:</Text>
+                    <Text style={{ fontWeight: '700' }}>{translated("TP2")}:</Text>
                     <Text style={{ fontWeight: 'normal' }}> {res.takeProfit2}</Text>
                   </>
                 ) : null}
               </Text>
               <Text style={[styles.label, { fontSize: 15 }]}>
-                RR: <Text style={{ fontWeight: 'normal', color: '#333' }}>{formatRR(res.entry, res.stopLoss, res.takeProfit)}</Text>
+                {translated("RR")}: <Text style={{ fontWeight: 'normal', color: '#333' }}>{formatRR(res.entry, res.stopLoss, res.takeProfit)}</Text>
               </Text>
               <Text style={[styles.label, { fontSize: 15 }]}>
-                Size: <Text style={{ fontWeight: 'normal', color: '#333' }}>{res.recommendedSize}</Text>
+                {translated("Size")}: <Text style={{ fontWeight: 'normal', color: '#333' }}>{res.recommendedSize}</Text>
               </Text>
               {/* Confidence badge (match Top Pick style) */}
               {res.confidence >= 75 ? (
                 <View style={styles.highConfidenceTag}>
-                  <Text style={styles.highConfidenceText}>{res.confidence}% High Confidence</Text>
+                  <Text style={styles.highConfidenceText}>{`${res.confidence}% ${translated("High Confidence")}`}</Text>
                 </View>
               ) : (
                 <View style={styles.confidenceTag}>
-                  <Text style={styles.confidenceText}>{res.confidence}% Confidence</Text>
+                  <Text style={styles.confidenceText}>{`${res.confidence}% ${translated("Confidence")}`}</Text>
                 </View>
               )}
               <TouchableOpacity onPress={() => toggleExpand(index)}>
                 <Text style={{ color: '#000', textDecorationLine: 'underline', marginBottom: 6 }}>
-                  {expanded[index] ? '▲ Less' : '▼ More'}
+                  {expanded[index] ? `▲ ${translated("Less")}` : `▼ ${translated("More")}`}
                 </Text>
               </TouchableOpacity>
               {expanded[index] && (
@@ -631,14 +648,14 @@ export default function App() {
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginTop: 8 }}>
                     {savedIds.includes(res.entry) ? (
-                      <Text style={{ fontStyle: 'italic', color: '#444' }}>✓ Saved</Text>
+                      <Text style={{ fontStyle: 'italic', color: '#444' }}>✓ {translated("Saved")}</Text>
                     ) : (
                       <TouchableOpacity
                         style={styles.saveBtnCompact}
                         onPress={() => saveTradeToHistory(res)}
                       >
                         <Feather name="save" size={14} color="white" />
-                        <Text style={styles.saveBtnTextCompact}>Save</Text>
+                        <Text style={styles.saveBtnTextCompact}>{translated("Save")}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -646,7 +663,7 @@ export default function App() {
               )}
               {/* --- Clarify/Ask AI follow-up section --- */}
               <View style={{ marginTop: 10 }}>
-                <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Ask AI a follow-up about this trade:</Text>
+                <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>{translated("Ask AI a follow-up about this trade:")}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TextInput
                 style={{
@@ -659,7 +676,7 @@ export default function App() {
                   color: isDark ? '#fff' : '#000',
                   marginRight: 8,
                 }}
-                placeholder="Type your question..."
+                placeholder={translated("Type your question...")}
                 placeholderTextColor={isDark ? '#aaa' : '#888'}
                 value={clarifyQuestion[index] || ''}
                 onChangeText={text =>
@@ -677,7 +694,7 @@ export default function App() {
                     }}
                     onPress={() => {
                       // Placeholder for voice input logic
-                      alert('Voice input coming soon!');
+                      alert(translated('Voice input coming soon!'));
                     }}
                   >
                     <Feather name="mic" size={18} color="#D4AF37" />
@@ -696,7 +713,7 @@ export default function App() {
                     disabled={clarifyLoading[index] || !(clarifyQuestion[index] && clarifyQuestion[index].trim())}
                   >
                     <Feather name="message-circle" size={16} color="#fff" />
-                    <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>Ask AI</Text>
+                    <Text style={{ color: '#fff', marginLeft: 4, fontWeight: 'bold' }}>{translated("Ask AI")}</Text>
                   </TouchableOpacity>
                 </View>
                 {/* Predefined question dropdown as a dropdown */}
@@ -712,7 +729,7 @@ export default function App() {
                     <Text style={{ color: (selectedResultQuestions[index] ? (isDark ? '#fff' : '#000') : '#888'), flex: 1 }}>
                       {selectedResultQuestions[index]
                         ? selectedResultQuestions[index]
-                        : 'Select a predefined question...'}
+                        : translated('Select a predefined question...')}
                     </Text>
                     <Feather name="chevron-down" size={18} color="#D4AF37" />
                   </TouchableOpacity>
@@ -720,7 +737,7 @@ export default function App() {
                 {clarifyLoading[index] && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
                     <ActivityIndicator size="small" color="#D4AF37" />
-                    <Text style={{ marginLeft: 8, color: isDark ? '#fff' : '#000' }}>AI is thinking...</Text>
+                    <Text style={{ marginLeft: 8, color: isDark ? '#fff' : '#000' }}>{translated("AI is thinking...")}</Text>
                   </View>
                 )}
                 {clarifyResponse[index] && !clarifyLoading[index] && (
@@ -737,11 +754,11 @@ export default function App() {
                       onPress={() => {
                         // Log feedback or send to backend in the future
                         console.log(`👍 Liked AI response for trade index ${index}!`);
-                        alert('Thank you for your feedback!');
+                        alert(translated('Thank you for your feedback!'));
                       }}
                     >
                       <AntDesign name="like1" size={18} color="#D4AF37" />
-                      <Text style={{ marginLeft: 5, color: '#D4AF37', fontWeight: 'bold' }}>Like</Text>
+                      <Text style={{ marginLeft: 5, color: '#D4AF37', fontWeight: 'bold' }}>{translated("Like")}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -783,7 +800,7 @@ export default function App() {
               marginBottom: 12,
               color: isDark ? '#fff' : '#000'
             }}>
-              Select a predefined question
+              {translated("Select a predefined question")}
             </Text>
             <FlatList
               data={predefinedQuestions}
@@ -802,7 +819,7 @@ export default function App() {
                     color: isDark ? '#fff' : '#000',
                     fontSize: 16,
                   }}>
-                    {item}
+                    {translated(item)}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -818,7 +835,7 @@ export default function App() {
                 paddingVertical: 8,
               }}
             >
-              <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 15 }}>Cancel</Text>
+              <Text style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: 15 }}>{translated("Cancel")}</Text>
             </TouchableOpacity>
           </View>
         </View>
